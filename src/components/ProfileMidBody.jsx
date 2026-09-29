@@ -1,8 +1,9 @@
-import { jwtDecode } from 'jwt-decode';
-import { useEffect } from 'react';
+import { useEffect, useContext } from 'react';
 import { Button, Col, Image, Nav, Row, Spinner } from 'react-bootstrap';
 import ProfilePostCard from './ProfilePostCard';
-import { usePosts } from '../contexts/PostsContext';
+import { AuthContext } from './AuthProvider';
+import { fetchPostsByUser } from '../features/posts/postsSlice';
+import { useDispatch, useSelector } from 'react-redux';
 
 export default function ProfileMidBody() {
   const url =
@@ -10,20 +11,14 @@ export default function ProfileMidBody() {
   const pic =
     'https://pbs.twimg.com/profile_images/1587405892437221376/h167Jlb2_400x400.jpg';
 
-  const { posts, loading, fetchPostsByUser } = usePosts();
+  const dispatch = useDispatch();
+  const posts = useSelector((state) => state.posts.posts);
+  const loading = useSelector((state) => state.posts.loading);
+  const { currentUser } = useContext(AuthContext);
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      const token = localStorage.getItem('authToken');
-      if (token) {
-        const decodedToken = jwtDecode(token);
-        const userId = decodedToken.id;
-        await fetchPostsByUser(userId);
-      }
-    };
-
-    fetchPosts();
-  }, []);
+    dispatch(fetchPostsByUser(currentUser.uid));
+  }, [dispatch, currentUser]);
 
   return (
     <Col sm={6} className="bg-light" style={{ border: "1px solid lightgrey" }}>
@@ -81,11 +76,11 @@ export default function ProfileMidBody() {
         </Nav.Item>
       </Nav>
       {loading && (
-  <Spinner animation="border" className="ms-3 mt-3" variant="primary" />
-)}
-        {posts.length > 0 && posts.map((post) => (
-          <ProfilePostCard key={post.id} content={post.content} postId={post.id} />
-        ))}
+        <Spinner animation="border" className="ms-3 mt-3" variant="primary" />
+      )}
+      {posts.map((post) => (
+        <ProfilePostCard key={post.id} post={post} />
+      ))}
     </Col>
   );
 }

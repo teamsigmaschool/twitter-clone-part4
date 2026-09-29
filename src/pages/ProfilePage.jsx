@@ -1,33 +1,40 @@
-import { useEffect } from "react";
+import { getAuth, signOut } from "firebase/auth";
+import { useEffect, useContext } from "react";
 import { Container, Row } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { useLocalStorage } from "usehooks-ts";
+import { AuthContext } from "../components/AuthProvider";
 import ProfileSideBar from "../components/ProfileSideBar";
 import ProfileMidBody from "../components/ProfileMidBody";
 
 export default function ProfilePage() {
-  const [authToken, setAuthToken] = useLocalStorage("authToken", "");
+  const auth = getAuth();
   const navigate = useNavigate();
+  const { currentUser } = useContext(AuthContext);
 
-  useEffect(()=>{
-    if(!authToken){
-      navigate("/login")
+  useEffect(() => {
+    // Check if current user is logged in
+    if (!currentUser) {
+      navigate("/login") // Redirect to login if user not logged in
     }
-  },[authToken, navigate])
+  }, [currentUser, navigate])
 
 
-  const handleLogout = () => {
-    setAuthToken("")
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
     <>
-<Container>
-  <Row>
-    <ProfileSideBar handleLogout={handleLogout}/>
-    <ProfileMidBody/>
-  </Row>
-</Container>
+      <Container>
+        <Row>
+          <ProfileSideBar handleLogout={handleLogout} />
+          <ProfileMidBody />
+        </Row>
+      </Container>
     </>
   );
 }

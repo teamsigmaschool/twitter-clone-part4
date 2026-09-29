@@ -1,18 +1,25 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { Button, Form, Modal } from "react-bootstrap";
-import {usePosts} from '../contexts/PostsContext'
+import { AuthContext } from "./AuthProvider";
 
 export default function NewPostModal({ show, handleClose }) {
   const [postContent, setPostContent] = useState("");
+  const [file, setFile] = useState(null);
+  const { currentUser, savePost } = useContext(AuthContext);
+  const userId = currentUser?.uid;
 
-const {savePost} = usePosts();
+  const handleSave = () => {
+    if (userId) {
+      savePost(userId, postContent, file);
+      handleClose();
+      setPostContent('');
+      setFile(null);
+    }
+  };
 
-const handleSave = async ()=> {
-  await savePost(postContent);
-
-  handleClose();
-  setPostContent('')
-}
+  const handleFileChange = (e) => {
+    setFile(e.target.files[0]);
+  }
 
   return (
     <>
@@ -25,8 +32,11 @@ const handleSave = async ()=> {
                 placeholder="What is happening?!"
                 as="textarea"
                 rows={3}
+                value={postContent}
                 onChange={(e) => setPostContent(e.target.value)}
               />
+              <br />
+              <Form.Control type="file" onChange={handleFileChange} />
             </Form.Group>
           </Form>
         </Modal.Body>
